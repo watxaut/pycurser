@@ -22,7 +22,7 @@ def return_twitter_msg(d_word: dict) -> str:
         first_str = "puta"
     elif s_type == "m":
         first_str = "puto"
-    elif s_type == "adj":
+    elif s_type == "adj" or s_type == "adv":
         first_str = "puto"
     elif s_type == "v" or s_type == "v*":
         first_str = "fuck"
@@ -75,7 +75,7 @@ class DiccionariSpider(scrapy.Spider):
         l_items = response.css(r"tr>td[colspan='2'][valign='TOP'][width='650']>font>i::text").extract()
         l_items = list(map(lambda item: item.strip(), l_items))
 
-        type_possibilities = ["m", "f", "adj", "v", "v*"]
+        type_possibilities = ["m", "f", "adj", "adv", "v", "v*"]
 
         l_type = list(filter(lambda item: item in type_possibilities, l_items))
 
