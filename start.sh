@@ -2,4 +2,4 @@
 
 source venv/bin/activate
 
-python3.7 src/main.py
+python3.7 main.py

@@ -8,7 +8,7 @@ from scrapy.crawler import CrawlerProcess
 from src.diccionari.diccionari.spiders.diccionari_spider import DiccionariSpider
 import src.twitter.twitter as twitter
 
-debug = True
+debug = False
 
 if __name__ == "__main__":
 
