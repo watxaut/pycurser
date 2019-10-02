@@ -11,6 +11,7 @@ def return_twitter_msg(d_word: dict) -> str:
 
     s_word = d_word["word"]
     s_type = d_word["type"]
+    s_url = d_word["url"]
 
     # adjectives in catalan come as adj + female termination, so I am getting the first part because it's easier
     if s_type == "adj":
@@ -28,7 +29,7 @@ def return_twitter_msg(d_word: dict) -> str:
         first_str = "fuck"
     else:
         first_str = "fuck"  # should never fall here but whatever
-    return "{first} {word}".format(first=first_str, word=s_word)
+    return "{first} {word}\n\nDefinició: {url}".format(first=first_str, word=s_word, url=s_url)
 
 
 class DiccionariSpider(scrapy.Spider):
