@@ -8,7 +8,6 @@ logger = logging.getLogger('pycurser')
 
 
 def return_twitter_msg(d_word: dict) -> str:
-
     s_word = d_word["word"]
     s_type = d_word["type"]
     s_url = d_word["url"]
@@ -23,6 +22,10 @@ def return_twitter_msg(d_word: dict) -> str:
         first_str = "puta"
     elif s_type == "m":
         first_str = "puto"
+    elif s_type == "fs":
+        first_str = "putes"
+    elif s_type == "ms":
+        first_str = "putos"
     elif s_type == "adj" or s_type == "adv":
         first_str = "puto"
     elif s_type == "v" or s_type == "v*":
@@ -76,17 +79,23 @@ class DiccionariSpider(scrapy.Spider):
         l_items = response.css(r"tr>td[colspan='2'][valign='TOP'][width='650']>font>i::text").extract()
         l_items = list(map(lambda item: item.strip(), l_items))
 
-        type_possibilities = ["m", "f", "adj", "adv", "v", "v*"]
+        type_possibilities = ["m", "f", "adj", "adv", "v", "v*", "pl"]
 
         l_type = list(filter(lambda item: item in type_possibilities, l_items))
 
         # should at least have 1 type, if not raise because there is a case that we do not control
+        l_type = [item.strip() for item in l_type]
         try:
-            s_type = l_type[0].strip()
+            s_type = l_type[0]
         except IndexError:
             str_err = "Something wrong with this l_items: '{}' in url: '{}'".format(l_items, response.url)
             logger.error(str_err)
             raise IndexError(str_err)
+
+        # if the type is plural, then add and s to the type
+        if len(l_type) > 1:
+            if "pl" == l_type[1]:
+                s_type += "s"
 
         # get the word from the title
         word = response.css(r"span[class='enc']::text").extract()[0].strip()
