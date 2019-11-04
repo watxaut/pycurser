@@ -1,6 +1,6 @@
 import scrapy
-import random
 import logging
+import time
 
 from scrapy.http.response import Response
 
@@ -30,6 +30,8 @@ def return_twitter_msg(d_word: dict) -> str:
         first_str = "puto"
     elif s_type == "v" or s_type == "v*":
         first_str = "fuck"
+    elif s_type == 'símb':
+        first_str = "puto"
     else:
         first_str = "fuck"  # should never fall here but whatever
     return "{first} {word}\n\nDefinició: {url}".format(first=first_str, word=s_word, url=s_url)
@@ -40,16 +42,17 @@ class DiccionariSpider(scrapy.Spider):
     This Spider will crawl a random page of the dictionary and return the information of one of the words in it in
     the form of a dictionary with word, genre, url and the whole message to send (to twitter in this case)
     """
-    name = "diccionari"
-    allowed_domains = ["diccionari.cat"]
 
-    # generate a random id to start with, from 1 to las id in dictionary
-    n = random.randint(1, 1547860)
-    n_id = str(n).zfill(7)
+    def __init__(self, kwargs):
+        self.name = "diccionari"
+        scrapy.Spider.__init__(self)
 
-    start_urls = [
-        'http://www.diccionari.cat/cgi-bin/AppDLC3.exe?APP=SEGUENTS&P={n_id}'.format(n_id=n_id)
-    ]
+        self.allowed_domains = ["diccionari.cat"]
+        self.start_id = kwargs["start_id"]
+
+        self.start_urls = [
+            'http://www.diccionari.cat/cgi-bin/AppDLC3.exe?APP=SEGUENTS&P={n_id}'.format(n_id=self.start_id)
+        ]
 
     def parse(self, response: Response) -> dict:
         """
@@ -60,13 +63,21 @@ class DiccionariSpider(scrapy.Spider):
         """
 
         # get <a> elements and retrieve the first one
-        a = response.css(r"a[href*='GECART']::attr(href)")[0]
+        tag_urls = response.css(r"a[href*='GECART']::attr(href)")
 
-        # get the url of the word
-        url_word = a.get()
+        # get the next page GECART ID and save it
+        js_next = response.css("a[class='SEGUENTS']::attr(href)")[0].get()
+        start_id_next = js_next.split("(")[-1].split(")")[0]
+        self.start_id = start_id_next
 
-        # follow the link of the first word in the page and stop
-        yield response.follow(url_word, self.parse_word)
+        for tag in tag_urls:
+            url = tag.get()
+            yield scrapy.Request(url, callback=self.parse_word)
+
+            time.sleep(1)
+
+        # # follow the link of the first word in the page and stop
+        # yield response.follow(url_word, self.parse_word)
 
     def parse_word(self, response: Response) -> dict:
         """
@@ -79,7 +90,7 @@ class DiccionariSpider(scrapy.Spider):
         l_items = response.css(r"tr>td[colspan='2'][valign='TOP'][width='650']>font>i::text").extract()
         l_items = list(map(lambda item: item.strip(), l_items))
 
-        type_possibilities = ["m", "f", "adj", "adv", "v", "v*", "pl"]
+        type_possibilities = ["m", "f", "adj", "adv", "v", "v*", "pl", 'símb']
 
         l_type = list(filter(lambda item: item in type_possibilities, l_items))
 
@@ -103,7 +114,9 @@ class DiccionariSpider(scrapy.Spider):
         data = {
             'word': word,  # it's only 1 element
             'type': s_type,
-            'url': response.url
+            'url': response.url,
+            'used': False,
+            'next_dict_id': self.start_id
         }
 
         # creates the message to send to twitter depending on the type of the word
