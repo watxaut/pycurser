@@ -3,6 +3,7 @@ import time
 import os
 import json
 
+from pathlib import Path
 from scrapy.crawler import CrawlerProcess
 
 from src.diccionari.diccionari.spiders.diccionari_spider import DiccionariSpider
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('pycurser')
 
     # change working directory because when executed with cron might fail
-    main_abs_path = os.path.dirname(os.path.abspath(__file__))
+    main_abs_path = str(Path(__file__).parent.absolute())
     os.chdir(main_abs_path)
 
     # check for items.json. If there is no file, then we need to start another page of the dictionary,
