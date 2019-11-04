@@ -1,5 +1,3 @@
 #!/bin/bash
 
-source venv/bin/activate
-
-python3.7 main.py
+/home/repos/pycurser/venv/bin/python3.7 /home/repos/pycurser/main.py
