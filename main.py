@@ -49,6 +49,10 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     logger = logging.getLogger('pycurser')
 
+    # change working directory because when executed with cron might fail
+    main_abs_path = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(main_abs_path)
+
     # check for items.json. If there is no file, then we need to start another page of the dictionary,
     # else, get the next not used word
     if os.path.isfile(json_path):
