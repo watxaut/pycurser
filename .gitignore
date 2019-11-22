@@ -4,6 +4,8 @@
 # erase config and items used
 config.txt
 src/items.json
+src/twitter/since_id.txt
+word.json
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
