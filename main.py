@@ -2,6 +2,7 @@ import logging
 import time
 import os
 import json
+import argparse
 
 from pathlib import Path
 from scrapy.crawler import CrawlerProcess
@@ -50,52 +51,69 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     logger = logging.getLogger('pycurser')
 
+    # parse args
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-a",
+        "--action",
+        type=str,
+        choices=["follow_back"],
+        help="Type of action to run. Leave empty to run the scraper",
+    )
+
+    args = parser.parse_args()
+
     # change working directory because when executed with cron might fail
     main_abs_path = str(Path(__file__).parent.absolute())
     os.chdir(main_abs_path)
 
-    # check for items.json. If there is no file, then we need to start another page of the dictionary,
-    # else, get the next not used word
-    if os.path.isfile(json_path):
-        l_words = read_json(json_path)
-    else:  # we need to scrap
-        # get start id
-        f = open(config_path, "r")
-        start_id = int(f.read())
-        f.close()
-
-        is_run = run_spider(start_id)
-        if not is_run:
-            raise Exception("Error while scrapping")
-        else:
+    if args.action is None:  # run scraper and tweet
+        # check for items.json. If there is no file, then we need to start another page of the dictionary,
+        # else, get the next not used word
+        if os.path.isfile(json_path):
             l_words = read_json(json_path)
+        else:  # we need to scrap
+            # get start id
+            f = open(config_path, "r")
+            start_id = int(f.read())
+            f.close()
 
-            # save next start id
-            f_config = open(config_path, "w")
-            f_config.write(l_words[0]["next_dict_id"])
-            f_config.close()
+            is_run = run_spider(start_id)
+            if not is_run:
+                raise Exception("Error while scrapping")
+            else:
+                l_words = read_json(json_path)
 
-    for d_word in l_words:
-        if not d_word["used"]:  # if the word is not used
-            d_word['used'] = True
-            msg = d_word["msg"]
-            break
-    else:
-        raise Exception("Every word used. Should never enter here")
+                # save next start id
+                f_config = open(config_path, "w")
+                f_config.write(l_words[0]["next_dict_id"])
+                f_config.close()
 
-    not_used_words = list(filter(lambda x: not x['used'], l_words))
-    print("Not used words: ", len(not_used_words))
-    if not_used_words:  # there is still words, save the file again
-        items_json = open(json_path, "w")
-        json.dump(l_words, items_json)
-        items_json.close()
-    else:  # no more words, erase file items.json
-        logger.info("Erasing file items.json as there is no more words not used")
-        os.remove(json_path)
+        for d_word in l_words:
+            if not d_word["used"]:  # if the word is not used
+                d_word['used'] = True
+                msg = d_word["msg"]
+                break
+        else:
+            raise Exception("Every word used. Should never enter here")
 
-    # now that we have the data, tweet the data
-    if not debug:
+        not_used_words = list(filter(lambda x: not x['used'], l_words))
+        print("Not used words: ", len(not_used_words))
+        if not_used_words:  # there is still words, save the file again
+            items_json = open(json_path, "w")
+            json.dump(l_words, items_json)
+            items_json.close()
+        else:  # no more words, erase file items.json
+            logger.info("Erasing file items.json as there is no more words not used")
+            os.remove(json_path)
+
+        # now that we have the data, tweet the data
+        if not debug:
+            api = twitter.init_twitter_handler()
+            response = twitter.send_tweet(api, msg)
+        else:
+            print("would tweet\n", msg)
+    elif args.action == "follow_back":
         api = twitter.init_twitter_handler()
-        response = twitter.send_tweet(api, msg)
-    else:
-        print("would tweet\n", msg)
+        is_done = twitter.follow_back(api)
+        print(f"Every follower folloed is {is_done}")

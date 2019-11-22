@@ -29,3 +29,10 @@ def send_tweet(api: tweepy.API, msg: str):
     response = api.update_status(msg)
     return response
 
+
+def follow_back(api):
+    logger.info("Retrieving and following followers")
+    for follower in tweepy.Cursor(api.followers).items():
+        if not follower.following:
+            logger.info(f"Following {follower.name}")
+            follower.follow()
