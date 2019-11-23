@@ -42,7 +42,7 @@ def follow_back(api: tweepy.API):
 
 
 def check_mentions(api, since_id):
-    print("Retrieving mentions")
+    logger.info("Retrieving mentions")
     new_since_id = since_id
     d_tweets = {}
     for tweet in tweepy.Cursor(api.mentions_timeline, since_id=since_id).items():
@@ -51,11 +51,11 @@ def check_mentions(api, since_id):
             continue
 
         tweet_msg = tweet.text.lower()
-        print(f"Tweet from: {tweet.user.name}")
-        print(f"Text in tweet: '{tweet_msg}'")
-        if "'" in tweet_msg or '"' in tweet_msg:
+        logger.info(f"Tweet from: {tweet.user.name}")
+        logger.info(f"Text in tweet: '{tweet_msg}'")
+        if '"' in tweet_msg:
             try:
-                word_to_search = tweet_msg.replace("'", '"').split('"')[1]
+                word_to_search = tweet_msg.split('"')[1]
                 d_tweets[tweet.id] = {"word": word_to_search, "screen_name": tweet.user.screen_name}
             except IndexError:
                 d_tweets[tweet.id] = {"word": None, "screen_name": tweet.user.screen_name}

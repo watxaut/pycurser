@@ -52,6 +52,7 @@ def run_spider(dictionary_start_id, json_path_tweet) -> bool:
     logger.info("Finished crawling")
     # for race conditions on writing files and so, better to sleep 1
     time.sleep(1)
+
     logger.info("JSON File created")
     return True
 
@@ -66,7 +67,7 @@ def main():
         "-a",
         "--action",
         type=str,
-        choices=["follow_back", "docker_mentions"],
+        choices=["follow_back", "reply_mentions"],
         help="Type of action to run. Leave empty to run the scraper",
     )
 
@@ -126,43 +127,41 @@ def main():
         api = twitter.init_twitter_handler()
         is_done = twitter.follow_back(api)
         logger.info(f"Every follower followed: {is_done}")
-    elif args.action == "docker_mentions":
+    elif args.action == "reply_mentions":
 
-        print("Starting reply bot twitter")
+        logger.info("Starting reply bot twitter")
         since_id = twitter.read_since_id()
-        print(f"Since_id: {since_id}")
+        logger.info(f"Since_id: {since_id}")
 
         api = twitter.init_twitter_handler()
 
-        while True:
-            d_tweets, new_since_id = twitter.check_mentions(api, since_id)
-            twitter.update_since_id(new_since_id)
-            print(f"Updated since_id: '{new_since_id}'")
+        d_tweets, new_since_id = twitter.check_mentions(api, since_id)
+        twitter.update_since_id(new_since_id)
+        logger.info(f"Updated since_id: '{new_since_id}'")
 
-            # process tweets and crawl
-            for tweet_id in d_tweets.keys():
-                word = d_tweets[tweet_id]["word"]
-                screen_name = d_tweets[tweet_id]["screen_name"]
-                if word is not None:
-                    items = crawl_word(word)
-                    definition = items[0]["definition"]
-                    url = items[0]["url"]
-                    word_scraped = items[0]["word"]
-                    reply_msg = f"@{screen_name} {definition}\nPuta."
-                    twitter.reply_tweet(api, tweet_id, reply_msg)
+        # process tweets and crawl
+        for tweet_id in d_tweets.keys():
+            word = d_tweets[tweet_id]["word"]
+            screen_name = d_tweets[tweet_id]["screen_name"]
+            if word is not None:
+                items = crawl_word(word)
+                definition = items[0]["definition"]
+                url = items[0]["url"]
+                word_scraped = items[0]["word"]
+                reply_msg = f"@{screen_name} {definition}\nEstudia."
+                twitter.reply_tweet(api, tweet_id, reply_msg)
 
-                    # remove file json
-                    logger.info("Erasing file items.json")
-                    json_path = "{}/{}".format(str(Path(__file__).parent.absolute()), "word.json")
-                    os.remove(json_path)
-                    time.sleep(1)
-                else:
-                    print("NO WORD FOUND")
-                    reply_msg = f"@{screen_name} Envolta la paraula a buscar en cometes simples (\') o cometes dobles (\").\n\n Puta."
-                    twitter.reply_tweet(api, tweet_id, reply_msg)
+                # remove file json
+                logger.info("Erasing file items.json")
+                json_path = "{}/{}".format(str(Path(__file__).parent.absolute()), "word.json")
+                os.remove(json_path)
+                time.sleep(1)
+            else:
+                logger.info("NO WORD FOUND")
+                reply_msg = f"@{screen_name} Envolta la paraula a buscar en cometes dobles (\").\n\n Estudia."
+                twitter.reply_tweet(api, tweet_id, reply_msg)
 
-            print("sleeping...")
-            time.sleep(60)
+            logger.info("Done replying")
 
 
 if __name__ == "__main__":
