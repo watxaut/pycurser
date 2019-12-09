@@ -108,7 +108,7 @@ def main():
             raise Exception("Every word used. Should never enter here")
 
         not_used_words = list(filter(lambda x: not x['used'], l_words))
-        logger.info("Not used words: ", len(not_used_words))
+        logger.info(f"Not used words: {len(not_used_words)}")
         if not_used_words:  # there is still words, save the file again
             items_json = open(json_path_tweet, "w")
             json.dump(l_words, items_json)
