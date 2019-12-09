@@ -11,7 +11,7 @@ import src.twitter.twitter as twitter
 from src.diccionari.diccionari.spiders.diccionari_spider import DiccionariSpider
 from src.diccionari.diccionari.spiders.diccionari_word_spider import DiccionariWordSpider
 
-debug = True
+debug = False
 
 
 def read_json(path):
