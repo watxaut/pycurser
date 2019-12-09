@@ -122,7 +122,7 @@ def main():
             api = twitter.init_twitter_handler()
             response = twitter.send_tweet(api, msg)
         else:
-            logger.info("would tweet\n", msg)
+            logger.info(f"would tweet\n{msg}")
     elif args.action == "follow_back":
         api = twitter.init_twitter_handler()
         is_done = twitter.follow_back(api)
